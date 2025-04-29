@@ -203,6 +203,14 @@
                 <div>
                     <label for="flow-temp">Подача (°C)</label>
                     <select id="flow-temp">
+                        <option value="30">30</option>
+                        <option value="35">35</option>
+                        <option value="40">40</option>
+                        <option value="45">45</option>
+                        <option value="50">50</option>
+                        <option value="55">55</option>
+                        <option value="60">60</option>
+                        <option value="65">65</option>
                         <option value="70">70</option>
                         <option value="75">75</option>
                         <option value="80" selected>80</option>
@@ -213,6 +221,12 @@
                 <div>
                     <label for="return-temp">Обратка (°C)</label>
                     <select id="return-temp">
+                        <option value="20">20</option>
+                        <option value="25">25</option>
+                        <option value="30">30</option>
+                        <option value="35">35</option>
+                        <option value="40">40</option>
+                        <option value="45">45</option>
                         <option value="50">50</option>
                         <option value="55">55</option>
                         <option value="60" selected>60</option>
@@ -223,6 +237,8 @@
                 <div>
                     <label for="room-temp">Воздух (°C)</label>
                     <select id="room-temp">
+                        <option value="10">10</option>
+                        <option value="15">15</option>
                         <option value="18">18</option>
                         <option value="20" selected>20</option>
                         <option value="22">22</option>
@@ -403,15 +419,19 @@
             return ((flowTemp + returnTemp) / 2) - roomTemp;
         }
 
-        // Коэффициент пересчета для разных Δt (примерные значения)
+        // Коэффициент пересчета для разных Δt
         function getPowerCorrectionFactor(deltaT) {
             // Базовые точки для интерполяции
             const points = [
+                { deltaT: 10, factor: 0.15 },
+                { deltaT: 20, factor: 0.30 },
                 { deltaT: 30, factor: 0.45 },
                 { deltaT: 40, factor: 0.65 },
                 { deltaT: 50, factor: 1.00 },
                 { deltaT: 60, factor: 1.30 },
-                { deltaT: 70, factor: 1.60 }
+                { deltaT: 70, factor: 1.60 },
+                { deltaT: 80, factor: 1.95 },
+                { deltaT: 90, factor: 2.30 }
             ];
             
             // Если точно совпадает с одной из точек
@@ -520,6 +540,7 @@
                 <p><strong>Размеры:</strong> ${length} мм × ${height} мм</p>
                 <p><strong>Температура подачи/обратки/воздуха:</strong> ${flowTemp}°C / ${returnTemp}°C / ${roomTemp}°C</p>
                 <p><strong>Расчетный Δt:</strong> ${deltaT.toFixed(1)}°C</p>
+                <p><strong>Поправочный коэффициент:</strong> ${correctionFactor.toFixed(3)}</p>
                 <p><strong>Тепловая мощность:</strong> <b>${actualPower.toFixed(0)} Вт</b></p>
                 
                 <h4>Мощность для разных режимов:</h4>
@@ -527,6 +548,7 @@
                     <tr>
                         <th>Режим</th>
                         <th>Δt</th>
+                        <th>Коэфф.</th>
                         <th>Мощность</th>
                     </tr>
             `;
@@ -534,9 +556,9 @@
             // Добавляем стандартные режимы
             const standardModes = [
                 { flow: 90, return: 70, room: 20, name: "Высокотемп." },
-                { flow: 80, return: 60, room: 20, name: "Среднетемп." },
                 { flow: 70, return: 50, room: 20, name: "Низкотемп." },
-                { flow: 55, return: 45, room: 20, name: "Эко-режим" }
+                { flow: 55, return: 45, room: 20, name: "Эко-режим" },
+                { flow: 45, return: 35, room: 20, name: "Сверхнизк." }
             ];
             
             // Добавляем текущий режим первым
@@ -561,6 +583,7 @@
                     <tr ${rowClass}>
                         <td>${mode.name}</td>
                         <td>${modeDeltaT.toFixed(1)}°C</td>
+                        <td>${modeFactor.toFixed(2)}</td>
                         <td>${modePower.toFixed(0)} Вт</td>
                     </tr>
                 `;
