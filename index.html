@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Калькулятор радиаторов</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f8f8f8;
+            color: #333;
+            line-height: 1.4;
+            font-size: 15px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        h1 {
+            color: #2a5885;
+            font-size: 18px;
+            text-align: center;
+            margin: 0 0 15px 0;
+            font-weight: 600;
+        }
+        .input-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            font-size: 15px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        select {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 10px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        button:active {
+            background-color: #3d8b40;
+            transform: scale(0.98);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f9f1;
+            border-radius: 8px;
+            display: none;
+        }
+        .result h3 {
+            margin-top: 0;
+            color: #2a5885;
+            font-size: 16px;
+        }
+        .note {
+            font-size: 13px;
+            color: #666;
+            margin: 15px 0 5px 0;
+            text-align: center;
+            line-height: 1.5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 14px;
+            table-layout: fixed;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 8px;
+            text-align: left;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: 500;
+        }
+        .highlight {
+            background-color: #fff8e1;
+        }
+        .temp-inputs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .temp-inputs > div {
+            flex: 1;
+            min-width: 100px;
+        }
+        .brand {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin: 15px 0 5px 0;
+            font-weight: 500;
+        }
+        
+        /* Мобильная адаптация */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+                font-size: 14px;
+            }
+            .container {
+                padding: 12px;
+                border-radius: 10px;
+            }
+            h1 {
+                font-size: 17px;
+            }
+            select, input {
+                padding: 9px 10px;
+                font-size: 14px;
+            }
+            .temp-inputs > div {
+                min-width: calc(33% - 6px);
+            }
+            table {
+                font-size: 13px;
+            }
+            th, td {
+                padding: 6px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .temp-inputs > div {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Калькулятор подбора радиаторов</h1>
+        
+        <div class="input-group">
+            <label for="radiator-type">Тип радиатора:</label>
+            <select id="radiator-type" onchange="updateDimensions()">
+                <option value="">-- Выберите тип --</option>
+                <option value="type11">Тип 11 (1 панель)</option>
+                <option value="type22">Тип 22 (2 панели)</option>
+                <option value="type33">Тип 33 (3 панели)</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label for="radiator-height">Высота (мм):</label>
+            <select id="radiator-height" onchange="updateLengths()">
+                <option value="">-- Сначала выберите тип --</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label for="radiator-length">Длина (мм):</label>
+            <select id="radiator-length">
+                <option value="">-- Сначала выберите высоту --</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label>Температурные параметры:</label>
+            <div class="temp-inputs">
+                <div>
+                    <label for="flow-temp">Подача (°C)</label>
+                    <select id="flow-temp">
+                        <option value="70">70</option>
+                        <option value="75">75</option>
+                        <option value="80" selected>80</option>
+                        <option value="85">85</option>
+                        <option value="90">90</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="return-temp">Обратка (°C)</label>
+                    <select id="return-temp">
+                        <option value="50">50</option>
+                        <option value="55">55</option>
+                        <option value="60" selected>60</option>
+                        <option value="65">65</option>
+                        <option value="70">70</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="room-temp">Воздух (°C)</label>
+                    <select id="room-temp">
+                        <option value="18">18</option>
+                        <option value="20" selected>20</option>
+                        <option value="22">22</option>
+                        <option value="24">24</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="calculate()">Рассчитать мощность</button>
+        
+        <div id="result" class="result"></div>
+        
+        <div class="note">
+            Для точного подбора рекомендуется проконсультироваться со специалистом.
+        </div>
+    </div>
+    
+    <div class="brand">Galf Design</div>
+
+    <script>
+        // Данные о радиаторах (примерные)
+        const radiatorData = {
+            'type11': {
+                name: "Тип 11 (1 панель)",
+                heights: {
+                    300: {
+                        lengths: {
+                            400: { power50: 144 },
+                            500: { power50: 180 },
+                            600: { power50: 216 },
+                            700: { power50: 252 },
+                            900: { power50: 324 },
+                            1000: { power50: 360 },
+                            1100: { power50: 396 },
+                            1400: { power50: 504 },
+                            1600: { power50: 576 },
+                            1800: { power50: 648 },
+                            2000: { power50: 720 }
+                        }
+                    },
+                    400: {
+                        lengths: {
+                            400: { power50: 192 },
+                            500: { power50: 240 },
+                            600: { power50: 288 },
+                            700: { power50: 336 },
+                            900: { power50: 432 },
+                            1000: { power50: 480 },
+                            1100: { power50: 528 },
+                            1400: { power50: 672 },
+                            1600: { power50: 768 },
+                            1800: { power50: 864 },
+                            2000: { power50: 960 }
+                        }
+                    },
+                    500: {
+                        lengths: {
+                            400: { power50: 240 },
+                            500: { power50: 300 },
+                            600: { power50: 360 },
+                            700: { power50: 420 },
+                            900: { power50: 540 },
+                            1000: { power50: 600 },
+                            1100: { power50: 660 },
+                            1400: { power50: 840 },
+                            1600: { power50: 960 },
+                            1800: { power50: 1080 },
+                            2000: { power50: 1200 }
+                        }
+                    }
+                }
+            },
+            'type22': {
+                name: "Тип 22 (2 панели)",
+                heights: {
+                    300: {
+                        lengths: {
+                            400: { power50: 264 },
+                            500: { power50: 330 },
+                            600: { power50: 396 },
+                            700: { power50: 462 },
+                            900: { power50: 594 },
+                            1000: { power50: 660 },
+                            1100: { power50: 726 },
+                            1400: { power50: 924 },
+                            1600: { power50: 1056 },
+                            1800: { power50: 1188 },
+                            2000: { power50: 1320 }
+                        }
+                    },
+                    400: {
+                        lengths: {
+                            400: { power50: 352 },
+                            500: { power50: 440 },
+                            600: { power50: 528 },
+                            700: { power50: 616 },
+                            900: { power50: 792 },
+                            1000: { power50: 880 },
+                            1100: { power50: 968 },
+                            1400: { power50: 1232 },
+                            1600: { power50: 1408 },
+                            1800: { power50: 1584 },
+                            2000: { power50: 1760 }
+                        }
+                    },
+                    500: {
+                        lengths: {
+                            400: { power50: 440 },
+                            500: { power50: 550 },
+                            600: { power50: 660 },
+                            700: { power50: 770 },
+                            900: { power50: 990 },
+                            1000: { power50: 1100 },
+                            1100: { power50: 1210 },
+                            1400: { power50: 1540 },
+                            1600: { power50: 1760 },
+                            1800: { power50: 1980 },
+                            2000: { power50: 2200 }
+                        }
+                    }
+                }
+            },
+            'type33': {
+                name: "Тип 33 (3 панели)",
+                heights: {
+                    300: {
+                        lengths: {
+                            400: { power50: 384 },
+                            500: { power50: 480 },
+                            600: { power50: 576 },
+                            700: { power50: 672 },
+                            900: { power50: 864 },
+                            1000: { power50: 960 },
+                            1100: { power50: 1056 },
+                            1400: { power50: 1344 },
+                            1600: { power50: 1536 },
+                            1800: { power50: 1728 },
+                            2000: { power50: 1920 }
+                        }
+                    },
+                    400: {
+                        lengths: {
+                            400: { power50: 512 },
+                            500: { power50: 640 },
+                            600: { power50: 768 },
+                            700: { power50: 896 },
+                            900: { power50: 1152 },
+                            1000: { power50: 1280 },
+                            1100: { power50: 1408 },
+                            1400: { power50: 1792 },
+                            1600: { power50: 2048 },
+                            1800: { power50: 2304 },
+                            2000: { power50: 2560 }
+                        }
+                    },
+                    500: {
+                        lengths: {
+                            400: { power50: 640 },
+                            500: { power50: 800 },
+                            600: { power50: 960 },
+                            700: { power50: 1120 },
+                            900: { power50: 1440 },
+                            1000: { power50: 1600 },
+                            1100: { power50: 1760 },
+                            1400: { power50: 2240 },
+                            1600: { power50: 2560 },
+                            1800: { power50: 2880 },
+                            2000: { power50: 3200 }
+                        }
+                    }
+                }
+            }
+        };
+
+        // Формула для расчета Δt
+        function calculateDeltaT(flowTemp, returnTemp, roomTemp) {
+            return ((flowTemp + returnTemp) / 2) - roomTemp;
+        }
+
+        // Коэффициент пересчета для разных Δt (примерные значения)
+        function getPowerCorrectionFactor(deltaT) {
+            // Базовые точки для интерполяции
+            const points = [
+                { deltaT: 30, factor: 0.45 },
+                { deltaT: 40, factor: 0.65 },
+                { deltaT: 50, factor: 1.00 },
+                { deltaT: 60, factor: 1.30 },
+                { deltaT: 70, factor: 1.60 }
+            ];
+            
+            // Если точно совпадает с одной из точек
+            const exactMatch = points.find(p => p.deltaT === deltaT);
+            if (exactMatch) return exactMatch.factor;
+            
+            // Если меньше минимального
+            if (deltaT < points[0].deltaT) {
+                return points[0].factor * (deltaT / points[0].deltaT);
+            }
+            
+            // Если больше максимального
+            if (deltaT > points[points.length-1].deltaT) {
+                const last = points[points.length-1];
+                return last.factor * (deltaT / last.deltaT);
+            }
+            
+            // Линейная интерполяция между точками
+            for (let i = 0; i < points.length - 1; i++) {
+                if (deltaT > points[i].deltaT && deltaT < points[i+1].deltaT) {
+                    const t = (deltaT - points[i].deltaT) / (points[i+1].deltaT - points[i].deltaT);
+                    return points[i].factor + t * (points[i+1].factor - points[i].factor);
+                }
+            }
+            
+            return 1.0; // по умолчанию
+        }
+
+        function updateDimensions() {
+            const type = document.getElementById('radiator-type').value;
+            const heightSelect = document.getElementById('radiator-height');
+            
+            heightSelect.innerHTML = '<option value="">-- Выберите высоту --</option>';
+            document.getElementById('radiator-length').innerHTML = '<option value="">-- Сначала выберите высоту --</option>';
+            
+            if (!type) return;
+            
+            const heights = Object.keys(radiatorData[type].heights);
+            heights.forEach(height => {
+                const option = document.createElement('option');
+                option.value = height;
+                option.textContent = `${height} мм`;
+                heightSelect.appendChild(option);
+            });
+        }
+
+        function updateLengths() {
+            const type = document.getElementById('radiator-type').value;
+            const height = document.getElementById('radiator-height').value;
+            const lengthSelect = document.getElementById('radiator-length');
+            
+            lengthSelect.innerHTML = '<option value="">-- Выберите длину --</option>';
+            
+            if (!type || !height) return;
+            
+            const lengths = Object.keys(radiatorData[type].heights[height].lengths);
+            lengths.forEach(length => {
+                const option = document.createElement('option');
+                option.value = length;
+                option.textContent = `${length} мм`;
+                lengthSelect.appendChild(option);
+            });
+        }
+
+        function calculate() {
+            const type = document.getElementById('radiator-type').value;
+            const height = document.getElementById('radiator-height').value;
+            const length = document.getElementById('radiator-length').value;
+            const flowTemp = parseInt(document.getElementById('flow-temp').value);
+            const returnTemp = parseInt(document.getElementById('return-temp').value);
+            const roomTemp = parseInt(document.getElementById('room-temp').value);
+            
+            if (!type || !height || !length) {
+                alert('Пожалуйста, выберите тип, высоту и длину радиатора');
+                return;
+            }
+            
+            // Проверка температур
+            if (flowTemp <= returnTemp) {
+                alert('Температура подачи должна быть выше температуры обратки');
+                return;
+            }
+            
+            if (roomTemp >= flowTemp) {
+                alert('Температура воздуха должна быть ниже температуры подачи');
+                return;
+            }
+            
+            // Расчет Δt
+            const deltaT = calculateDeltaT(flowTemp, returnTemp, roomTemp);
+            
+            // Получаем мощность при Δt=50°C
+            const radiator = radiatorData[type];
+            const powerAt50 = radiator.heights[height].lengths[length].power50;
+            
+            // Получаем поправочный коэффициент
+            const correctionFactor = getPowerCorrectionFactor(deltaT);
+            
+            // Рассчитываем фактическую мощность
+            const actualPower = powerAt50 * correctionFactor;
+            
+            // Формируем результат
+            let resultHTML = `
+                <h3>Результаты расчета:</h3>
+                <p><strong>Тип радиатора:</strong> ${radiator.name}</p>
+                <p><strong>Размеры:</strong> ${length} мм × ${height} мм</p>
+                <p><strong>Температура подачи/обратки/воздуха:</strong> ${flowTemp}°C / ${returnTemp}°C / ${roomTemp}°C</p>
+                <p><strong>Расчетный Δt:</strong> ${deltaT.toFixed(1)}°C</p>
+                <p><strong>Тепловая мощность:</strong> <b>${actualPower.toFixed(0)} Вт</b></p>
+                
+                <h4>Мощность для разных режимов:</h4>
+                <table>
+                    <tr>
+                        <th>Режим</th>
+                        <th>Δt</th>
+                        <th>Мощность</th>
+                    </tr>
+            `;
+            
+            // Добавляем стандартные режимы
+            const standardModes = [
+                { flow: 90, return: 70, room: 20, name: "Высокотемп." },
+                { flow: 80, return: 60, room: 20, name: "Среднетемп." },
+                { flow: 70, return: 50, room: 20, name: "Низкотемп." },
+                { flow: 55, return: 45, room: 20, name: "Эко-режим" }
+            ];
+            
+            // Добавляем текущий режим первым
+            const currentMode = { 
+                flow: flowTemp, 
+                return: returnTemp, 
+                room: roomTemp,
+                name: "Ваш режим"
+            };
+            const allModes = [currentMode, ...standardModes];
+            
+            // Добавляем строки для всех режимов
+            allModes.forEach(mode => {
+                const modeDeltaT = calculateDeltaT(mode.flow, mode.return, mode.room);
+                const modeFactor = getPowerCorrectionFactor(modeDeltaT);
+                const modePower = powerAt50 * modeFactor;
+                
+                const isCurrent = mode.flow === flowTemp && mode.return === returnTemp && mode.room === roomTemp;
+                const rowClass = isCurrent ? 'class="highlight"' : '';
+                
+                resultHTML += `
+                    <tr ${rowClass}>
+                        <td>${mode.name}</td>
+                        <td>${modeDeltaT.toFixed(1)}°C</td>
+                        <td>${modePower.toFixed(0)} Вт</td>
+                    </tr>
+                `;
+            });
+            
+            resultHTML += `</table>`;
+            
+            document.getElementById('result').innerHTML = resultHTML;
+            document.getElementById('result').style.display = 'block';
+            
+            // Прокручиваем к результатам
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // Инициализация Telegram WebApp
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+    </script>
+</body>
+</html>
